@@ -1,4 +1,5 @@
 import { getRevisionDates } from "./script.mjs";
+import { getUserIDs } from "./common.mjs";
 import assert from "node:assert";
 import test from "node:test";
 
