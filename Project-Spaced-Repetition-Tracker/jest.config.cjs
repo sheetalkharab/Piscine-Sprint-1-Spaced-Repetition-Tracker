@@ -1,5 +1,7 @@
+// jest.config.cjs
+/** @type {import('jest').Config} */
 module.exports = {
-  testEnvironment: "jsdom",
-  // no extensionsToTreatAsEsm option needed here
-  transform: {}, // if you want no transform; or configure as needed
+  transform: {}, // no Babel/CJS transforms
+  testEnvironment: "node", // Node’s globals (no jsdom)
+  testMatch: ["**/?(*.)+(test).mjs"], // pick up *.test.mjs files
 };
