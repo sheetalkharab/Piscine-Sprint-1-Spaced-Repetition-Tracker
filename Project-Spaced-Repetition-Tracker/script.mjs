@@ -4,147 +4,119 @@
 // Note that when running locally, in order to open a web page which uses modules, you must serve the directory over HTTP e.g. with https://www.npmjs.com/package/http-server
 // You can't open the index.html file using a file:// URL.
 
+
 import { getUserIds } from "./common.mjs";
+import { addData, getData } from "./storage.mjs";
 
-window.onload = function () {
-  const users = getUserIds();
-  //document.querySelector("body").innerText = `There are ${users.length} users`;
-  const select = document.getElementById("user-select");
-  users.forEach((user) => {
-    const option = document.createElement("option");
-    option.value = user;
-    option.textContent = `User ${user}`;
-    select.appendChild(option);
-  });
+// DOM Elements
+const userSelect = document.getElementById("user-select");
+const topicInput = document.getElementById("topic-name");
+const dateInput = document.getElementById("start-date");
+const agendaMessage = document.getElementById("agenda-message");
+const agendaList = document.getElementById("agenda-list");
+const topicForm = document.getElementById("topic-form");
 
-  const dateInput = document.getElementById("start-date");
-  dateInput.valueAsDate = new Date();
+// track active user (updated when dropdown changes)
+let currentUser = null;
 
-  const agendaList = document.getElementById("agenda-list");
-  const agendaMessage = document.getElementById("agenda-message");
-  const form = document.getElementById("topic-form");
-
-  let agendas = JSON.parse(localStorage.getItem("agendas")) || {};
-
-  function formatDate(date) {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
-  function showAgenda(userId) {
-    agendaList.innerHTML = "";
-
-    if (!userId) {
-      agendaMessage.textContent = "Please select a user to see the agenda.";
-      return;
-    }
-
-    const userAgenda = agendas[userId] || [];
-
-    const today = new Date();
-    const futureRevisions = [];
-
-    userAgenda.forEach((topicItem) => {
-      topicItem.revisions.forEach((revDate) => {
-        today.setHours(0, 0, 0, 0);
-        if (revDate >= today) {
-          futureRevisions.push({ topic: topicItem.topic, date: new Date(revDate) });
-        }
-      });
-    });
-
-    futureRevisions.sort((a, b) => a.date - b.date);
-
-    if (futureRevisions.length === 0) {
-      agendaMessage.textContent = "No agenda for this user.";
-      return;
-    } else {
-      agendaMessage.textContent = "";
-    }
-
-    futureRevisions.forEach(({ topic, date }) => {
-      const li = document.createElement("li");
-      li.textContent = `${topic}, ${formatDate(date)}`;
-      agendaList.appendChild(li);
-    });
-  }
-
-  select.addEventListener("change", (e) => {
-    showAgenda(e.target.value);
-  });
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const userId = select.value;
-    const topic = document.getElementById("topic-name").value.trim();
-    const startDateStr = dateInput.value;
-
-    if (!userId) {
-      alert("Please select a user first.");
-      return;
-    }
-    if (!topic) {
-      alert("Please enter a topic name.");
-      return;
-    }
-    if (!startDateStr) {
-      alert("Please select a start date.");
-      return;
-    }
-
-    const startDate = new Date(startDateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // zero out time for comparison
-    startDate.setHours(0, 0, 0, 0);
-
-    const revisions = [];
-
-    function addDays(date, days) {
-      const d = new Date(date);
-      if(days==0)
-      {
-        d.setDate(d.getDate() );
-      return d;
-      }
-      d.setDate(d.getDate() + days);
-      return d;
-    }
-   
-
-    function addMonths(date, months) {
-  const d = new Date(date);
-  const targetMonth = d.getMonth() + months;
-  d.setMonth(targetMonth);
-
-  if (d.getMonth() !== (targetMonth % 12)) {
-    d.setDate(0);
-  }
-  return d;
+function formatDate(date) {
+  return date.toISOString().split("T")[0];
 }
 
+dateInput.value = formatDate(new Date());
 
-    revisions.push(addDays(startDate, 7));
-    revisions.push(addMonths(startDate, 1));
-    revisions.push(addMonths(startDate, 3));
-    revisions.push(addMonths(startDate, 6));
-    revisions.push(addMonths(startDate, 12));
+function addMonths(date, months) {
+  const newDate = new Date(date);
+  const d = newDate.getDate();
+  newDate.setMonth(newDate.getMonth() + months);
 
-    if (!agendas[userId]) {
-      agendas[userId] = [];
-    }
+  // Handle month rollover
+  if (newDate.getDate() < d) {
+    newDate.setDate(0);
+  }
 
-    agendas[userId].push({ topic, revisions });
+  return newDate;
+}
 
-    localStorage.setItem("agendas", JSON.stringify(agendas));
+function getRevisionDates(startDate) {
+  const baseDate = new Date(startDate);
 
-    form.reset();
-    dateInput.valueAsDate = new Date();
+  return [
+    new Date(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000), // +1 week
+    addMonths(baseDate, 1), // +1 month
+    addMonths(baseDate, 3), // +3 months
+    addMonths(baseDate, 6), // +6 months
+    addMonths(baseDate, 12), // +1 year
+  ];
+}
 
-    showAgenda(userId);
-
+function populateDropdown() {
+  const users = getUserIds();
+  users.forEach((userID) => {
+    const option = document.createElement("option");
+    option.value = userID;
+    option.textContent = `User ${userID}`;
+    userSelect.appendChild(option);
   });
-};
-localStorage.clear();
+}
+
+function showAgenda(data) {
+  agendaMessage.innerHTML = "";
+  agendaList.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    agendaMessage.textContent = "No agenda found";
+    return;
+  }
+
+  const today = new Date(formatDate(new Date()));
+
+  const futureDates = data
+    .filter((d) => new Date(d.date) >= today)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (futureDates.length === 0) {
+    agendaMessage.textContent =
+      "No upcoming revisions. All entries are in the past.";
+    return;
+  }
+
+  futureDates.forEach((d) => {
+    const li = document.createElement("li");
+    li.textContent = `${d.topic}, ${new Date(d.date).toLocaleDateString()}`;
+    agendaList.appendChild(li);
+  });
+}
+
+topicForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const topic = topicInput.value.trim();
+  const date = dateInput.value;
+
+  const dates = getRevisionDates(date);
+  const newEntries = dates.map((date) => ({
+    topic,
+    date,
+  }));
+
+  addData(currentUser, newEntries);
+  showAgenda(getData(currentUser));
+
+  topicForm.reset();
+  dateInput.value = formatDate(new Date());
+});
+
+userSelect.addEventListener("change", () => {
+  const selectedUser = userSelect.value;
+  currentUser = selectedUser || null;
+
+  if (!currentUser) {
+    agendaMessage.textContent = "Please select a user.";
+    agendaList.innerHTML = "";
+    return;
+  }
+  const agenda = getData(currentUser);
+  showAgenda(agenda);
+});
+populateDropdown();
