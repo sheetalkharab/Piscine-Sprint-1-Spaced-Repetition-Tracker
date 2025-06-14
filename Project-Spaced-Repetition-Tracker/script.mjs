@@ -7,7 +7,6 @@
 import { getUserIds } from "./common.mjs";
 import { addData, getData } from "./storage.mjs";
 
-// ─── PURE LOGIC EXPORTS ────────────────────────────
 export function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
@@ -32,9 +31,8 @@ export function getRevisionDates(startDate) {
   ];
 }
 
-// ─── BROWSER-ONLY UI CODE ───────────────────────────
+
 if (typeof document !== "undefined") {
-  // grab your DOM elements
   const userSelect = document.getElementById("user-select");
   const topicInput = document.getElementById("topic-name");
   const dateInput = document.getElementById("start-date");
@@ -56,47 +54,58 @@ if (typeof document !== "undefined") {
   }
 
   function showAgenda(data) {
-    agendaMessage.innerHTML = "";
-    agendaList.innerHTML = "";
-    if (!data?.length) {
-      agendaMessage.textContent = "No agenda found";
-      return;
-    }
-    const today = new Date(formatDate(new Date()));
-    const future = data
-      .filter((d) => new Date(d.date) >= today)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  agendaMessage.innerHTML = "";
+  agendaList.innerHTML = "";
 
-    if (!future.length) {
-      agendaMessage.textContent = "No upcoming revisions. All in the past.";
-      return;
-    }
-    future.forEach((d) => {
-      const li = document.createElement("li");
-      li.textContent = `${d.topic}, ${new Date(d.date).toLocaleDateString()}`;
-      agendaList.appendChild(li);
-    });
+  if (!data || data.length === 0) {
+    agendaMessage.textContent = "No agenda found";
+    return;
   }
 
+  const today = new Date(formatDate(new Date()));
+  const futureDates = data
+    .filter((d) => new Date(d.date) >= today)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (futureDates.length === 0) {
+    agendaMessage.textContent = "No upcoming revisions. All in the past.";
+    return;
+  }
+
+  futureDates.forEach((d) => {
+    const li = document.createElement("li");
+    li.textContent = `${d.topic}, ${new Date(d.date).toLocaleDateString()}`;
+    agendaList.appendChild(li);
+  });
+}
+
   topicForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const topic = topicInput.value.trim();
-    const date = dateInput.value;
-    const entries = getRevisionDates(date).map((d) => ({ topic, date }));
-    addData(currentUser, entries);
-    showAgenda(getData(currentUser));
-    topicForm.reset();
-    dateInput.value = formatDate(new Date());
+  e.preventDefault();
+
+  const topic = topicInput.value.trim();
+  const date = dateInput.value;
+
+  const dates = getRevisionDates(date);
+  const newEntries = dates.map((date) => ({ topic, date }));
+
+  addData(currentUser, newEntries);
+  showAgenda(getData(currentUser));
+
+  topicForm.reset();
+  dateInput.value = formatDate(new Date());
   });
 
   userSelect.addEventListener("change", () => {
-    currentUser = userSelect.value || null;
+    const selectedUser = userSelect.value;
+    currentUser = selectedUser || null;
+
     if (!currentUser) {
       agendaMessage.textContent = "Please select a user.";
       agendaList.innerHTML = "";
       return;
     }
-    showAgenda(getData(currentUser));
+    const agenda = getData(currentUser);
+    showAgenda(agenda);
   });
 
   populateDropdown();
