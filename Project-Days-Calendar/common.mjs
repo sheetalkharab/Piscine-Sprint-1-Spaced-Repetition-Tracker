@@ -1,5 +1,63 @@
-// This is a placeholder file which shows how you can define functions which can be used from both a browser script and a node script. You can delete the contents of the file once you have understood how it works.
+import days from "./days.json" assert { type: "json" };
 
-export function getGreeting() {
-    return "Hello";
+const pad = (num) => String(num).padStart(2, "0");
+
+// Helper to convert names to numbers
+const weekdayMap = {
+  monday: 0,
+  tuesday: 1,
+  wednesday: 2,
+  thursday: 3,
+  friday: 4,
+  saturday: 5,
+  sunday: 6
+};
+
+const ordinalMap = {
+  first: 1,
+  second: 2,
+  third: 3,
+  fourth: 4,
+  fifth: 5,
+  last: -1
+};
+
+// Converts month name to 0–11 number
+const getMonthIndex = (monthName) =>
+  new Date(`${monthName} 1, 2000`).getMonth();
+
+// Finds correct date in a year for a given rule
+function calculateDate({ monthName, dayName, occurence }, year) {
+  const month = getMonthIndex(monthName);
+  const weekday = weekdayMap[dayName.toLowerCase()];
+  const target = ordinalMap[occurence.toLowerCase()];
+
+  let date = new Date(year, month, 1);
+  let count = 0, lastMatch = null;
+
+  while (date.getMonth() === month) {
+    if (date.getDay() === (weekday + 1) % 7) {
+      count++;
+      lastMatch = new Date(date);
+      if (count === target) return date;
+    }
+    date.setDate(date.getDate() + 1);
+  }
+
+  return target === -1 ? lastMatch : null;
+}
+
+// Generates a map of commemorative dates for a given year
+export function getCommemorativeDatesForYear(year) {
+  const result = {};
+
+  for (const day of days) {
+    const date = calculateDate(day, year);
+    if (!date) continue;
+
+    const key = `${year}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    result[key] = day.name;
+  }
+
+  return result;
 }
