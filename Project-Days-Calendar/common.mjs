@@ -13,7 +13,7 @@ const weekdayMap = {
   saturday: 6
 
 };
-
+//  Maps ordinal names to numbers
 const ordinalMap = {
   first: 1,
   second: 2,
