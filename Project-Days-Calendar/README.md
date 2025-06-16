@@ -34,7 +34,7 @@ Regardless of your group size, you must:
 * The days from the JSON file must appear correctly when the month they fall in is displayed. For example:
   * If October 2024 is being shown, October 8th must show Ada Lovelace Day.
   * If October 2025 is being shown, October 14th must show Ada Lovelace Day.
-* The calendar should work for every year - if someone goes to 1900, or 2050, or any other year, the commemerative days should be correctly displayed.
+* The calendar should work for every year - if someone goes to 1900, or 2050, or any other year, the commemorative days should be correctly displayed.
 * The calendar should work if days were added or removed from the JSON file. You must not hard-code logic for specific days. If, for instance, International Dawn Chorus Day were added to the JSON file (The first Sunday of May), your calendar should show it correctly without modification.
 * Other than the above styling requirements, no styling is required.
 * Your GitHub repository must contain at least one unit test which demonstrates that your code works. End to end tests are optional. Testing via the DOM is optional.
