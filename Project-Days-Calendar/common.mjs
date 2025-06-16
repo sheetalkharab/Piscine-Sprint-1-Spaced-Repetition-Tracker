@@ -1,6 +1,6 @@
-import days from "./days.json" assert { type: "json" };
+import days from "./days.json" with { type: "json" };
 
-const pad = (num) => String(num).padStart(2, "0");
+const pad = n => String(n).padStart(2, "0");
 
 // Helper to convert names to numbers
 const weekdayMap = {
@@ -36,7 +36,7 @@ function calculateDate({ monthName, dayName, occurence }, year) {
   let count = 0, lastMatch = null;
 
   while (date.getMonth() === month) {
-    if (date.getDay() === (weekday + 1) % 7) {
+    if (date.getDay() === weekday) {
       count++;
       lastMatch = new Date(date);
       if (count === target) return date;
@@ -48,16 +48,14 @@ function calculateDate({ monthName, dayName, occurence }, year) {
 }
 
 // Generates a map of commemorative dates for a given year
-export function getCommemorativeDatesForYear(year) {
+export function getCommemorativeDatesForYear(year, data = days) {
   const result = {};
-
-  for (const day of days) {
+  for (const day of data) {
     const date = calculateDate(day, year);
-    if (!date) continue;
-
-    const key = `${year}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-    result[key] = day.name;
+    if (date) {
+      const key = `${year}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+      result[key] = day.name;
+    }
   }
-
   return result;
 }

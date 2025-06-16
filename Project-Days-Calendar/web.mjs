@@ -1,15 +1,5 @@
-// This is a placeholder file which shows how you can access functions and data defined in other files.
-// It can be loaded into index.html.
-// Note that when running locally, in order to open a web page which uses modules, you must serve the directory over HTTP e.g. with https://www.npmjs.com/package/http-server
-// You can't open the index.html file using a file:// URL.
-
-import { resolveCommemorativeDates } from "./common.mjs";
+import { getCommemorativeDatesForYear } from "./common.mjs";
 import daysData from "./days.json" with { type: "json" };
-
-// window.onload = function() {
-//     document.querySelector("body").innerText = `${getGreeting()} - there are ${daysData.length} known days`;
-// }
-
 
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
@@ -84,7 +74,12 @@ function renderCalendar(month, year) {
   document.getElementById("current-month").textContent = `${monthName} ${year}`;
 
   // Prepare commemorative dates as before
-  const commemorativeDates = resolveCommemorativeDates(daysData, year);
+ const commemorativeDatesArr = Object.entries(
+        getCommemorativeDatesForYear(year, daysData)
+      ).map(([iso, name]) => ({
+        date: new Date(iso),
+        name
+      }));
 
   const table = document.createElement("table");
   table.style.borderCollapse = "collapse";
@@ -117,7 +112,7 @@ function renderCalendar(month, year) {
       if (date >= 1 && date <= daysInMonth) {
         cell.textContent = date;
 
-        commemorativeDates.forEach(event => {
+        commemorativeDatesArr.forEach(event => {
           if (
             event.date.getFullYear() === year &&
             event.date.getMonth() === month &&
