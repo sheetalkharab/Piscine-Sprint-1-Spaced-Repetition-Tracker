@@ -108,6 +108,10 @@ function renderCalendar(month, year) {
       cell.style.padding = "10px";
       cell.style.height = "80px";
       cell.style.verticalAlign = "top";
+      cell.style.width = "110px"
+      cell.style.maxWidth = "110px";
+      cell.style.wordBreak = "break-word";
+      cell.style.whiteSpace = "normal";
 
       if (date >= 1 && date <= daysInMonth) {
         cell.textContent = date;
@@ -120,7 +124,7 @@ function renderCalendar(month, year) {
           ) {
             const label = document.createElement("div");
             label.textContent = event.name;
-            label.style.fontSize = "0.7em";
+            label.style.fontSize = "1em";
             label.style.color = "blue";
             label.style.marginTop = "5px";
             cell.appendChild(label);
