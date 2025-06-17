@@ -1,12 +1,3 @@
-// import { getGreeting } from "./common.mjs";
-// import assert from "node:assert";
-// import test from "node:test";
-
-// test("Greeting is correct", () => {
-//   assert.equal(getGreeting(), "Hello");
-// });
-
-
 import { getCommemorativeDatesForYear } from "./common.mjs";
 import assert from "node:assert";
 import test from "node:test";
@@ -16,5 +7,6 @@ test("getCommemorativeDatesForYear returns expected structure", () => {
   assert.ok(typeof result === "object", "Result should be an object");
 
   
-  assert.strictEqual(result["2024-10-08"], "Ada Lovelace Day"); // Adjust to your actual data
+  assert.strictEqual(result["2024-10-08"], "Ada Lovelace Day");
+  
 });
