@@ -7,6 +7,7 @@
 import { getUserIds, getData, setData} from "./storage.js";
 
 
+
 const userSelect = document.getElementById("user-select");
 const bookmarksDiv = document.getElementById("bookmarks");
 const form = document.getElementById("bookmark-form");
@@ -14,11 +15,11 @@ let currentUser = null;
 
 window.onload = function () {
   
-  // To fill dropdown with user IDs
   populateUserDropdown();
   userSelect.addEventListener("change", onUserChange);
   form.addEventListener("submit", onFormSubmit);
-
+  
+ // To fill dropdown with user IDs
   function populateUserDropdown() {
   const users = getUserIds();
   userSelect.innerHTML = `<option value="">-- Select a user --</option>`;
@@ -44,7 +45,7 @@ function onUserChange() {
 function displayBookmarks(userId) {
   let bookmarks = getData(userId);
   if (!bookmarks) {
-  bookmarks = [];
+    bookmarks = [];
   }
   if (bookmarks.length === 0) {
     bookmarksDiv.innerText = "No bookmarks found for this user.";
